@@ -1,49 +1,54 @@
-import book
-import pandas as pd
-import seaborn as sns
-import numpy as np
-import matplotlib.pyplot as plt
+import postgre
+import psycopg2 as pg
+import pandas.io.sql as psql
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
-# Scrape data from source
-# book.getBooks()
+# Insert into  postgres database
+# postgre.insertingIntoPostgre()
 
-# Reading the scraped data
-df = pd.read_csv("books.csv")
+conn = pg.connect(database="amazon",
+                  user='postgres', password='342958',
+                  host='127.0.0.1', port='5432'
+                  )
 
-print(df.head())
+books = psql.read_sql('SELECT * FROM books', conn)
 
-print(df.describe())
+# querying the database to get the year with more books
+books_grouped_year = psql.read_sql(
+    'SELECT year, count(title) FROM books GROUP BY year ORDER BY count(year) desc LIMIT 10', conn)
 
-print(df.info())
+books_2014 = psql.read_sql("SELECT * FROM books WHERE year = '2024'", conn)
 
-print(df["year"].unique())
+highest_priced_pook = psql.read_sql(
+    "SELECT * FROM books where price = (SELECT MAX(price) as pm FROM books p)", conn)
 
-# Extracting the year from the string of date
-df["year"] = df["year"].str.replace(r"((\d{0,2})\s(\w{0,5})\s)", "")
+books["title"] = books["title"].str.strip()
+books["title"] = books["title"].str.lower()
 
-print(df["year"].unique())
+books["index"] = range(0, books.shape[0])
 
-# This shows the number of each book per year
-print(df.groupby(['year']).count())
+books.set_index("index")
 
-# Visualizing the year column in a table
-year_count = df.groupby('year').size().reset_index(name='Count')
+first_column = books.pop('index')
 
-# Create a bar chart to visualize the distribution of years
-fig, ax = plt.subplots(figsize=(10, 7))  # Set the width to 10 inches
-ax.bar(year_count['year'], year_count['Count'])
-ax.set_xlabel('Year')
-ax.set_ylabel('Count')
-ax.set_title('Distribution of Years')
+books.insert(0, 'index', first_column)
 
-ax.set_xticklabels(year_count['year'], rotation=90)
+tfidf = TfidfVectorizer(stop_words='english')
+booksVector = tfidf.fit_transform(books['title']).toarray()
 
-plt.show()
+cosine_sim = cosine_similarity(booksVector)
 
-# Removing the dollar sign from the prices and converting it to a float
-df["price"] = df["price"].str.extract(r"(\d{1,3}\.\d{1,3})", expand=False)
-df["price"] = df["price"].astype("Float64")
-print(df["price"])
 
-# Checking me mean prices of books
-print(f'The average price of books on Amazon is: {df["price"].mean()}')
+def get_recommendations(title):
+    idx = books[books['title'] == title.lower()].index[0]
+    sim_scores = list(enumerate(cosine_sim[idx]))
+    sim_scores = sorted(
+        sim_scores, key=lambda x: x[1], reverse=True)
+    sim_scores = sim_scores[1:11]
+    book_indices = [i[0] for i in sim_scores]
+
+    return books['title'].iloc[book_indices]
+
+
+print(get_recommendations("The Light We Carry: Overcoming in Uncertain Times"))
