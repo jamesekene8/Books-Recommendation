@@ -25,8 +25,8 @@ def insertingIntoPostgre():
     print("Database created successfully........")
 
     conn = psycopg2.connect(database="amazon",
-                            user='postgres', password='342958',
-                            host='127.0.0.1', port='5432'
+                            user=config["DATABASE"], password=config["PASSWORD"],
+                            host='127.0.0.1', port=config["PORT"]
                             )
 
     conn.autocommit = True
@@ -59,6 +59,3 @@ def insertingIntoPostgre():
         cursor.close()
 
     execute_values(conn, eda.df, 'books')
-
-
-insertingIntoPostgre()
