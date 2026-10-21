@@ -1,0 +1,11 @@
+beautifulsoup4
+requests
+pandas
+numpy
+matplotlib
+seaborn
+plotly
+wordcloud
+psycopg2-binary
+python-dotenv
+scikit-learn

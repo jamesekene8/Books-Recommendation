@@ -1,4 +1,5 @@
 import postgre
+from dotenv import dotenv_values
 import psycopg2 as pg
 import pandas.io.sql as psql
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -19,10 +20,10 @@ def main():
     postgre.insertingIntoPostgre()
 
     # Reading from pstgre database and practising sql queries
-    conn = pg.connect(database="amazon",
-                      user='postgres', password='342958',
-                      host='127.0.0.1', port='5432'
-                      )
+    config = dotenv_values(".env")
+    conn = pg.connect(database=config["DATABASE"], user=config["USER"],
+                      password=config["PASSWORD"], host='127.0.0.1',
+                      port=config["PORT"])
 
     books = psql.read_sql('SELECT * FROM books', conn)
 
