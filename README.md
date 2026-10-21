@@ -1,138 +1,74 @@
-<a name="readme-top"></a>
+# Self-Help Book Recommender: Amazon UK
 
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
-  </ol>
-</details>
+An end-to-end mini data project. It scrapes self-help book listings from Amazon UK, cleans and explores the data, loads it into **PostgreSQL**, answers questions with **SQL**, and builds a **content-based recommender** that suggests similar books from a given title.
 
-<!-- ABOUT THE PROJECT -->
+![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)
+![pandas](https://img.shields.io/badge/pandas-150458?logo=pandas&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikitlearn&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
 
-## About The Project
+## Pipeline
 
-<h2>INTRODUCTION</h2>
-In this project, I developed a recommender system for self-help books on Amazon. The goal of the project was to scrape data from Amazon, perform exploratory data analysis on the data, store the data in a PostgreSQL database, practice querying the database using SQL commands, and build a recommender system to suggest books based on user input.
-
-<h4>METHODOLOGY</h4>
-The project involved the following steps:
-<ol>
-   <li><strong>Web Scraping</strong>: I scraped data on self-help books from Amazon using Python's Beautiful Soup library. The data collected included book title, author, price, customer ratings, and other relevant information.</li>
-
-  <li><strong>Exploratory Data Analysis (EDA)</strong>: I analyzed the data in the CSV file to understand the distribution of variables, detect outliers, identify trends, and create visualizations. I used Python libraries such as Pandas, NumPy, and Matplotlib to perform EDA.</li>
-
-  <li><strong>Database Management</strong>: I created a PostgreSQL database and a table to store the data I had collected. I used Python's psycopg2 library to write the data from the CSV file to the database.</li>
-
-  <li><strong>SQL Queries</strong>: I practiced querying the database using SQL commands such as SELECT, WHERE, GROUP BY, and JOIN to extract information from the data. I used SQL queries to explore relationships between variables and answer specific questions about the data.</li>
-
-  <li><strong>Recommender System</strong>: I developed a recommender system that takes user input and suggests books based on the data in the PostgreSQL database. I used Python's scikit-learn library to build a collaborative filtering-based recommender system.</strong>
-
-</ol>
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-### Built With
-
-- [![Python][Python.com]][Python-url]
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-## Getting Started
-
-Here are some instructions on how to run this application
-
-### Prerequisites
-
-Here are some things you are going to need to install.
-
-- python: Avalaible at https://www.python.org/downloads/
-- PostgreSQL: https://www.postgresql.org/download/
-- Pandas
-  ```sh
-  pip install pandas
-  ```
-- Seaborn
-  ```sh
-  pip install seaborn
-  ```
-- Pandas
-  ```sh
-  pip install matplotlib
-  ```
-- Psycopg
-  ```sh
-  pip install psycopg2
-  ```
-- BeautifulSoup
-  ```sh
-  pip install beautifulsoup4
-  ```
-
-### Installation
-
-1. Clone the repo
-   ```sh
-   git clone https://github.com/jamesekene8/Books-Recommendation
-   ```
-2. Create your own .env fie in the root directory of your project
-   ```js
-   DATABASE='your own database name'
-   USER='your own database user name
-   PASSWORD='your own database password'
-   PORT='your own port databse port'
-   ```
-3. Run the ffg command on the root directory of your project
-
-```sh
-python app.py
+```
+Amazon UK (72 result pages)
+   │  book.py      requests + BeautifulSoup → books.csv (title, url, author, year, price)
+   ▼
+   │  eda.py       clean year & price, distributions, word cloud, top authors (pandas, Matplotlib, Plotly)
+   ▼
+   │  postgre.py   create `amazon` database + `books` table, bulk insert (psycopg2 execute_values)
+   ▼
+   │  app.py       SQL queries (GROUP BY year, sub-query for max price) → TF-IDF + cosine similarity recommender
 ```
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+## The data
 
-<!-- CONTRIBUTING -->
+**1,368 listings** were scraped (May 2023). Because sponsored results repeat across pages, they cover **995 unique titles**. The median price is **£10.99**.
 
-## Contributing
+![Listings by publication year](docs/books_by_year.png)
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Most listings were published in 2022–23, so the bestseller pages are dominated by recent releases.
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
+![Top authors by number of listings](docs/top_authors.png)
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/Books-Recommendation`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/Books-Recommendation`)
-5. Open a Pull Request
+A handful of self-published authors with large back catalogues account for a big share of the listings.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+## How the recommender works
 
-<!-- CONTACT -->
+It's **content-based**: every title is turned into a TF-IDF vector (English stop words removed), and books are ranked by **cosine similarity** to the title you enter.
 
-## Contact
+Example: input *"Atomic Habits: An Easy and Proven Way to Build Good Habits and Break Bad Ones"*
 
-James Uguna - [@jaeuguna8](https://twitter.com/jaeuguna8) - jamesekene8@gmail.com
+| # | Recommended |
+|---|---|
+| 1 | Designing Your Life: For Fans of Atomic Habits |
+| 2 | The Kindness Method: Changing Habits for Good |
+| 3 | Tiny Habits: The Small Changes That Change Everything |
+| 4 | The Easy Way to Control Alcohol |
+| 5 | The Easy Way to Stop Smoking |
 
-Project Link: [https://github.com/jamesekene8/Books-Recommendation](https://github.com/jamesekene8/Books-Recommendation)
+The first three are good matches. Results 4–5 show the main limitation: with titles alone, a shared word ("Easy") can outweigh what the book is actually about.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+## Running it
 
-[Python.com]: https://img.shields.io/badge/Python-Blue?style=for-the-badge&logo=python&logoColor=white
-[Python-url]: https://jquery.com
+**Prerequisites:** Python 3.10+ and a local PostgreSQL server.
+
+```bash
+git clone https://github.com/jamesekene8/Books-Recommendation
+cd Books-Recommendation
+pip install -r requirements.txt
+cp .env.example .env        # set your Postgres user, password and port
+python app.py               # scrape → EDA → load to Postgres → query → recommend
+```
+
+Amazon's page markup changes often, so the scraper may need its CSS selectors updated. The `books.csv` snapshot from the original run is included, so the EDA and recommender can be run without re-scraping.
+
+## What I'd improve next
+
+- [ ] De-duplicate titles before vectorising (sponsored listings repeat)
+- [ ] Use richer features than titles: descriptions, categories, ratings
+- [ ] Compare with a sentence-embedding model (e.g. `all-MiniLM-L6-v2`) for semantic similarity
+- [ ] Wrap the recommender in a small Streamlit app
+
+## Author
+
+**James Uguna**: [GitHub](https://github.com/jamesekene8)
